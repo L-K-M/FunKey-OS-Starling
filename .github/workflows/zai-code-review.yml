@@ -23,7 +23,9 @@ concurrency:
 jobs:
   review:
     name: Review PR with GLM 5.3
-    runs-on: ubuntu-latest
+    # A ZAI_REVIEW_RUNNER repository variable (e.g. truenas) moves the review
+    # to self-hosted runners with that label; unset, GitHub hosts it.
+    runs-on: ${{ vars.ZAI_REVIEW_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 90
     # pull_request_target exposes repository secrets and a write-capable token.
     # Never run this privileged job for branches from untrusted forks.
