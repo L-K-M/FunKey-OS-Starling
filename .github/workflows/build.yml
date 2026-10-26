@@ -25,6 +25,7 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/build_sdk.yml'
       - '.github/workflows/zai-code-review.yml'
+      - '.github/workflows/licenses.yml'
   pull_request:
     branches: [ rg_nano, master ]
     paths-ignore:
@@ -39,6 +40,7 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/build_sdk.yml'
       - '.github/workflows/zai-code-review.yml'
+      - '.github/workflows/licenses.yml'
   # No branch filter here: workflow_dispatch does not support one, and the ref
   # is chosen when the run is started.
   workflow_dispatch:
@@ -96,6 +98,64 @@ jobs:
 
     - name: Build FunKey-OS
       run: make
+
+    # Every file a release publishes carries Third-Party-Notices.txt, read
+    # here out of the files themselves: both filesystems of the SD card image,
+    # the rootfs inside the update file, and the SDK tarball. Each must also
+    # name components it is known to bundle, so a stale or truncated file
+    # fails too. licenses/notices.py writes them; see licenses/notices.ini.
+    - name: Check the third-party notices in the images
+      run: |
+        set -euo pipefail
+        tmp="$RUNNER_TEMP/notices"
+        mkdir -p "$tmp"
+        notices=usr/share/licenses/Third-Party-Notices.txt
+        mapfile -t names < <(make -s print-artifacts)
+        img="images/${names[0]}"; fwu="images/${names[1]}"; sdk="images/${names[2]}"
+
+        # check FILE PATTERN...: FILE is not empty and matches every PATTERN.
+        check() {
+          local file=$1 pattern
+          shift
+          test -s "$file" || { echo "::error::no notices in $file"; return 1; }
+          for pattern in "$@" '^Source code: https://github.com/' 'GNU GENERAL PUBLIC LICENSE'; do
+            grep -q -- "$pattern" "$file" || {
+              echo "::error::$file does not match '$pattern'"; return 1; }
+          done
+        }
+
+        # The update file is a cpio archive around the gzipped FunKey rootfs.
+        cpio -i --quiet --to-stdout rootfs.ext2.gz < "$fwu" | gunzip > "$tmp/fwu.ext2"
+        debugfs -R "cat /$notices" "$tmp/fwu.ext2" > "$tmp/fwu.txt"
+        check "$tmp/fwu.txt" '^busybox ' '^linux ' '^FunKey-sdk-2.3.0 toolchain' \
+          '^snes9x2005$' '^picodrive$' '^mame2000$' '^fbalpha2012$' \
+          'Reserved Font Name Cabin' 'SIL OPEN FONT LICENSE' 'LDEJRuff' 'orginaljun'
+
+        # The SD card image: Recovery is the first partition in its MBR,
+        # FunKey the second, and FunKey's must be the one the update installs.
+        python3 - "$img" > "$tmp/partitions" <<'EOF'
+        import struct, sys
+        with open(sys.argv[1], "rb") as f:
+            mbr = f.read(512)
+        for i in range(4):
+            start, size = struct.unpack("<II", mbr[454 + 16 * i:462 + 16 * i])
+            if size:
+                print(start, size)
+        EOF
+        n=0
+        while read -r start size; do
+          n=$((n + 1))
+          dd if="$img" of="$tmp/p$n.ext4" bs=512 skip="$start" count="$size" status=none
+          debugfs -R "cat /$notices" "$tmp/p$n.ext4" > "$tmp/p$n.txt"
+        done < "$tmp/partitions"
+        check "$tmp/p1.txt" '^busybox ' '^linux ' '^uboot ' '^FunKey-sdk-2.3.0 toolchain'
+        cmp "$tmp/p2.txt" "$tmp/fwu.txt"
+
+        tar -xzOf "$sdk" --wildcards '*/share/licenses/Third-Party-Notices.txt' > "$tmp/sdk.txt"
+        check "$tmp/sdk.txt" '^host-gcc-final ' '^host-binutils ' '^gdb ' '^musl ' '^buildroot '
+
+        wc -c "$tmp"/*.txt
+        rm -rf "$tmp"
 
     - name: List build results
       if: always()

@@ -4,8 +4,9 @@ name: License metadata
 # complete as the <PKG>_LICENSE and <PKG>_LICENSE_FILES each package declares.
 # A misspelt variable or a missing one fails nothing: Buildroot reads it as
 # "unknown", copies no license text, and the package ships without one. This
-# checks the packages this repository defines in seconds, rather than waiting
-# for the notices step of a two-hour build to object.
+# checks the packages this repository defines, and the overlay's fonts and
+# sounds, in seconds, rather than waiting for the notices step of a two-hour
+# build to object.
 on:
   push:
     branches: [ rg_nano, master ]
@@ -23,7 +24,7 @@ concurrency:
 
 jobs:
   packages:
-    name: Custom packages declare their licenses
+    name: Packages and assets declare their licenses
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -75,3 +76,13 @@ jobs:
         done
 
         exit "$status"
+
+    # The build's notices step fails on a font or sound in the overlay, or in
+    # its zips, that licenses/notices.ini does not attribute. That part needs
+    # no build, so run it here and find out in seconds rather than hours.
+    - name: Check the overlay's fonts and sounds are attributed
+      run: |
+        python3 licenses/notices.py --config licenses/notices.ini \
+          --stamp check --title "FunKey rootfs overlay" \
+          --overlay FunKey/board/funkey/rootfs-overlay \
+          --output "$RUNNER_TEMP/overlay-notices.txt"
