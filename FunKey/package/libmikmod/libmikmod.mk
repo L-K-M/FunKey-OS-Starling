@@ -5,6 +5,9 @@
 #############################################################
 LIBMIKMOD_VERSION:=3.3.11.1
 LIBMIKMOD_SITE:=http://sourceforge.net/projects/mikmod/files/libmikmod/$(LIBMIKMOD_VERSION)
+# README: LGPL 2 (COPYING.LIB) or later; COPYING.LESSER is LGPL 2.1.
+LIBMIKMOD_LICENSE = LGPL-2.0+
+LIBMIKMOD_LICENSE_FILES = COPYING.LIB COPYING.LESSER
 
 LIBMIKMOD_CONF_OPTS = --localstatedir=/var
 

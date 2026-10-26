@@ -7,7 +7,11 @@
 PICOARCH_VERSION = HEAD
 PICOARCH_SITE_METHOD = git
 PICOARCH_SITE = https://github.com/DrUm78/picoarch.git
-PICOARCH_LICENSE = GPL-2+, LGPL-2.1+, MAME
+# picoarch itself is BSD-3-Clause; libpicofe, built into it, is GPL-2.0+ or
+# LGPL-2.1+ or MAME, with MIT filters. The cores built below keep their own
+# licenses, four of them non-commercial; licenses/notices.ini lists them and
+# collects their texts into the notices.
+PICOARCH_LICENSE = BSD-3-Clause, GPL-2.0+ or LGPL-2.1+ or MAME (libpicofe), MIT (libpicofe filters), cores: GPL-2.0, GPL-2.0+, GPL-3.0+, MIT, Zlib (Handy, in mednafen_lynx), FBA (fbalpha2012), MAME (mame2000), PicoDrive (picodrive), Snes9x (snes9x2005)
 PICOARCH_LICENSE_FILES = LICENSE
 
 PICOARCH_DEPENDENCIES = sdl sdl_image sdl_ttf fonts-droid

@@ -6,7 +6,10 @@
 COMMANDER_VERSION = HEAD
 COMMANDER_SITE_METHOD = git
 COMMANDER_SITE = https://github.com/DrUm78/commander.git
-COMMANDER_LICENSE = GPL-2.0
+# The build links the SDL_gfx and SDL_ttf copies under third_party/ (zlib
+# license) rather than the system ones; see COMMANDER_CONF_OPTS below.
+COMMANDER_LICENSE = MIT, Zlib (third_party/SDL_gfx, third_party/SDL_ttf)
+COMMANDER_LICENSE_FILES = LICENSE.txt third_party/SDL_gfx-2.0.25/LICENSE
 
 COMMANDER_DEPENDENCIES = sdl sdl_ttf sdl_gfx
 

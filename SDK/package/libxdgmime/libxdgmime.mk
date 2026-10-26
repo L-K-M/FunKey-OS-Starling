@@ -7,7 +7,9 @@ LIBXDGMIME_VERSION = db79e7c
 LIBXDGMIME_SITE_METHOD = git
 LIBXDGMIME_SITE = https://github.com/FunKey-Project/libxdgmime.git
 LIBXDGMIME_DEPENDENCIES = shared-mime-info
-LIBXDGMIME_LICENCE = LGPL-2.1+ or AFL-2.1
+# The source headers offer either license; neither text is in the tree.
+LIBXDGMIME_LICENSE = AFL-2.0 or LGPL-2.0+
+LIBXDGMIME_LICENSE_FILES = README src/xdgmime.h
 
 LIBXDGMIME_INSTALL_STAGING = YES
 
