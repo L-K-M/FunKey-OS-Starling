@@ -45,6 +45,12 @@ FWU        = FunKey-rootfs-$(STAMP)-$(OS_DEVICE).fwu
 # toolchain really is shared and a device suffix would claim otherwise.
 SDK_NAME   = FunKey-sdk-$(STAMP)
 
+# licenses/notices.py writes each artifact's Third-Party-Notices.txt from its
+# tree's Buildroot legal-info: the sdk target below for the SDK, the post-build
+# scripts for the two filesystems, which take the release name from here.
+NOTICES    = python3 licenses/notices.py --config licenses/notices.ini --stamp $(STAMP)
+export STARLING_STAMP = $(STAMP)
+
 # Strip quotes and then whitespaces
 qstrip = $(strip $(subst ",,$(1)))
 #"))
@@ -75,16 +81,26 @@ buildroot/.git:
 	@git submodule init
 	@git submodule update
 
+# legal-info runs before each build because the post-build scripts write the
+# filesystem's Third-Party-Notices.txt from it. It needs only each package's
+# patched source, which the build then reuses.
 fun: buildroot Recovery/output/.config FunKey/output/.config
 	@$(call MESSAGE,"Making fun")
 	@$(call MESSAGE,"Making fun in Recovery")
+	@$(BRMAKE) BR2_EXTERNAL=../Recovery O=../Recovery/output legal-info
 	@$(BRMAKE) BR2_EXTERNAL=../Recovery O=../Recovery/output
 	@$(call MESSAGE,"Making fun in FunKey")
+	@$(BRMAKE) BR2_EXTERNAL=../FunKey O=../FunKey/output legal-info
 	@$(BRMAKE) BR2_EXTERNAL=../FunKey O=../FunKey/output
 
 sdk: buildroot SDK/output/.config
 	@$(call MESSAGE,"Making FunKey SDK")
 	@$(BRMAKE) BR2_EXTERNAL=../SDK O=../SDK/output prepare-sdk
+	@$(call MESSAGE,"Collecting SDK licenses")
+	@$(BRMAKE) BR2_EXTERNAL=../SDK O=../SDK/output legal-info
+	@$(NOTICES) --title "FunKey SDK" --host-packages \
+		--legal-info SDK/output/legal-info --build-dir SDK/output/build \
+		--output SDK/output/host/share/licenses/Third-Party-Notices.txt
 	@$(call MESSAGE,"Generating SDK tarball")
 	@export LC_ALL=C; \
 	SDK=$(SDK_NAME); \
