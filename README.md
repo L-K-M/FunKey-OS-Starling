@@ -377,9 +377,9 @@ Buildroot builds; musl, the GCC runtime libraries and gdbserver from the
 prebuilt FunKey-sdk-2.3.0 toolchain; the emulator cores picoarch builds; and
 fonts, theme sounds and freeware games. Four of the cores, snes9x2005,
 PicoDrive, MAME 2000 and FB Alpha 2012, are under licenses that forbid selling
-them, so an image that contains them may not be sold. Their notices, with each
-component's license, license texts and source where known, ship in each
-artifact as `Third-Party-Notices.txt`:
+them, so an image that contains them may not be sold. The notices of all of
+these, with each component's license, license texts and source where known,
+ship in each artifact as `Third-Party-Notices.txt`:
 
 - SD card image and update file: `/usr/share/licenses/Third-Party-Notices.txt`
   in the FunKey filesystem, and in the Recovery filesystem for its own packages
