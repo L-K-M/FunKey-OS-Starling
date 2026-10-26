@@ -86,3 +86,31 @@ jobs:
           --stamp check --title "FunKey rootfs overlay" \
           --overlay FunKey/board/funkey/rootfs-overlay \
           --output "$RUNNER_TEMP/overlay-notices.txt"
+
+    # Each RetroFE theme carries a Credits.txt, both in the overlay and in
+    # funkey_files.zip, which first boot and updates unpack onto the card.
+    # The Atari Lynx boot ROM is proprietary firmware and must not ship.
+    - name: Check every theme carries its credits
+      run: |
+        python3 - <<'PY'
+        import os, sys, zipfile
+        overlay = "FunKey/board/funkey/rootfs-overlay"
+        layouts = os.path.join(overlay, "usr/games/layouts")
+        archive = os.path.join(overlay, "usr/local/share/funkey_files.zip")
+        problems = [os.path.join(layouts, d) + " has no Credits.txt"
+                    for d in sorted(os.listdir(layouts))
+                    if os.path.isdir(os.path.join(layouts, d))
+                    and not os.path.isfile(os.path.join(layouts, d, "Credits.txt"))]
+        with zipfile.ZipFile(archive) as z:
+            names = set(z.namelist())
+        prefix = "FunKey/.retrofe/layouts/"
+        themes = sorted({n[len(prefix):].split("/")[0] for n in names
+                         if n.startswith(prefix) and n.count("/") > 3})
+        problems += ["%s: %s has no Credits.txt" % (archive, t) for t in themes
+                     if prefix + t + "/Credits.txt" not in names]
+        problems += ["%s ships %s" % (archive, n) for n in sorted(names)
+                     if n.lower().endswith("/lynxboot.img")]
+        for p in problems:
+            print("::error::" + p)
+        sys.exit(1 if problems else 0)
+        PY
