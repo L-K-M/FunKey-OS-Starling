@@ -1,0 +1,6 @@
+# The buildroot submodule's package/tinyalsa/tinyalsa.hash, with the NOTICE
+# hash of the version it builds (FunKey-Project/tinyalsa 30d4711). Its own
+# copy still has the NOTICE hash of upstream tinyalsa 1.1.1, which fails
+# legal-info. See FunKey/external.mk.
+sha256  dbccbd5352ac51f614373920ceb984ea0691a0dd444699bd664fb536066e87a2  tinyalsa-30d4711.tar.gz
+sha256  ea22a4711f5250f88a4d7011fbc65367d1b02ac954dcc49f5b6d7c135e6537c4  NOTICE
