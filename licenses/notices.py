@@ -83,10 +83,14 @@ def read_text(path):
             data = f.read()
     except OSError:
         return None
+    return decode_text(data)
+
+
+def decode_text(data):
+    """Decode a license text as UTF-8, accepting older Latin-1 files."""
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
-        # Older license files are Latin-1; the output is UTF-8 throughout.
         text = data.decode("latin-1")
     return text.replace("\r\n", "\n").replace("\r", "\n").strip("\n") + "\n"
 
@@ -233,8 +237,14 @@ def git_commit(path):
 def cores(notices, target_dir, cores_dir):
     """Entries for the libretro cores installed in /usr/games."""
     configured = notices.sections("core")
-    by_library = {sec.get("library", name + "_libretro.so"): name
-                  for name, sec in configured.items()}
+    by_library = {}
+    for name, sec in configured.items():
+        library = sec.get("library", name + "_libretro.so")
+        if library in by_library:
+            notices.error("cores %s and %s both claim /usr/games/%s"
+                          % (by_library[library], name, library))
+            continue
+        by_library[library] = name
     games = os.path.join(target_dir, "usr", "games")
     installed = sorted(f for f in os.listdir(games)
                        if f.endswith("_libretro.so")) \
@@ -365,6 +375,21 @@ def assets(notices, overlay):
                 notices.error("%s: no file in the overlay has sha256 %s"
                               % (what, digest))
         texts = notices.vendored(sec, what)
+        for rel in lines(sec, "files"):
+            archive, marker, member = rel.partition("!")
+            path = os.path.join(overlay, archive)
+            try:
+                if marker:
+                    with zipfile.ZipFile(path) as z:
+                        text = decode_text(z.read(member))
+                else:
+                    text = read_text(path)
+            except (KeyError, OSError, zipfile.BadZipFile):
+                text = None
+            if text is None:
+                notices.error("%s: overlay text %s is missing" % (what, rel))
+                continue
+            texts.append((rel, text))
         gap = sec.get("gap", "").strip()
         if gap:
             notices.gaps.append("%s: %s" % (what, gap))

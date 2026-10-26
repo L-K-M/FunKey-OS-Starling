@@ -115,6 +115,14 @@ jobs:
         sys.exit(1 if problems else 0)
         PY
 
+        # TFT ships a placeholder highlight.wav, not orginaljun's clip.
+        # Do not retain an attribution for a work the theme does not contain.
+        if grep -qi orginaljun \
+          FunKey/board/funkey/rootfs-overlay/usr/games/layouts/TFT/Credits.txt; then
+          echo "::error::TFT credits a sound it does not ship"
+          exit 1
+        fi
+
     # The README scopes LICENSE to Starling's own code, as GPL-2.0-or-later
     # the way the Makefile header grants it, and says where the bundled
     # components' notices ship.
