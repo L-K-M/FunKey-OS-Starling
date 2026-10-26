@@ -47,6 +47,19 @@ jobs:
     - name: Build SDK
       run: make sdk
 
+    # The SDK carries Third-Party-Notices.txt; see the same check in build.yml.
+    - name: Check the third-party notices in the SDK
+      run: |
+        set -euo pipefail
+        sdk="images/$(make -s print-artifacts | sed -n 3p)"
+        tar -xzOf "$sdk" --wildcards '*/share/licenses/Third-Party-Notices.txt' > "$RUNNER_TEMP/sdk.txt"
+        test -s "$RUNNER_TEMP/sdk.txt"
+        for pattern in '^host-gcc-final ' '^host-binutils ' '^gdb ' '^musl ' '^buildroot ' \
+                       '^Source code: https://github.com/' 'GNU GENERAL PUBLIC LICENSE'; do
+          grep -q -- "$pattern" "$RUNNER_TEMP/sdk.txt" || {
+            echo "::error::the SDK's notices do not match '$pattern'"; exit 1; }
+        done
+
     - name: List build results
       if: always()
       run: |

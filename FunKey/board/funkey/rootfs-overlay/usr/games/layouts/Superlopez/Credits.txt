@@ -1,0 +1,10 @@
+Highlight.wav: "Arcade button 1 click sound.mp3" by orginaljun,
+https://freesound.org/people/orginaljun/sounds/157871/
+Licensed under CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+Converted to WAV.
+
+Roboto-Bold.ttf: Roboto by Christian Robertson, font data copyright
+Google 2012. Licensed under the Apache License, Version 2.0,
+https://www.apache.org/licenses/LICENSE-2.0
+
+License texts: /usr/share/licenses/Third-Party-Notices.txt on the console.

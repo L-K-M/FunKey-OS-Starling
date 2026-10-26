@@ -1,0 +1,138 @@
+name: License metadata
+
+# Buildroot's legal-info, and the notices the images carry, can only be as
+# complete as the <PKG>_LICENSE and <PKG>_LICENSE_FILES each package declares.
+# A misspelt variable or a missing one fails nothing: Buildroot reads it as
+# "unknown", copies no license text, and the package ships without one. This
+# checks the packages this repository defines, and the overlay's fonts and
+# sounds, in seconds, rather than waiting for the notices step of a two-hour
+# build to object.
+on:
+  push:
+    branches: [ rg_nano, master ]
+  pull_request:
+    branches: [ rg_nano, master ]
+  workflow_dispatch:
+
+# The job only reads; give it the least token there is.
+permissions:
+  contents: read
+
+concurrency:
+  group: licenses-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    name: Packages and assets declare their licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check every custom package's license variables
+      run: |
+        # Packages whose upstream states no license at all. They have no file
+        # to name; licenses/notices.ini records them as gaps.
+        known_gaps=" PRODSCREENS "
+
+        status=0
+        fail() {
+          echo "::error file=$1::$2"
+          status=1
+        }
+
+        for mk in FunKey/package/*/*.mk Recovery/package/*/*.mk SDK/package/*/*.mk; do
+          # Buildroot derives the variable prefix from the package directory.
+          pkg="$(basename "$(dirname "$mk")" | tr 'a-z-' 'A-Z_')"
+
+          # Spellings Buildroot does not read, so the license silently
+          # becomes "unknown".
+          if grep -Eq '_SITE_LICENSE|_LICENCE' "$mk"; then
+            fail "$mk" "license variable Buildroot ignores; use ${pkg}_LICENSE and ${pkg}_LICENSE_FILES"
+          fi
+
+          # GPL-2.1 does not exist (LGPL-2.1 does).
+          if grep -Eq '^[A-Z0-9_]+_LICENSE[[:space:]]*[:?]?=.*(^|[^L])GPL-2\.1' "$mk"; then
+            fail "$mk" "GPL-2.1 is not a license; name the one upstream's COPYING carries"
+          fi
+
+          if ! grep -Eq "^${pkg}_LICENSE[[:space:]]*[:?]?=[[:space:]]*[^[:space:]]" "$mk"; then
+            fail "$mk" "no ${pkg}_LICENSE"
+          fi
+
+          case "$known_gaps" in
+          *" $pkg "*) continue ;;
+          esac
+
+          if grep -Eq "^${pkg}_LICENSE[[:space:]]*[:?]?=[[:space:]]*unknown" "$mk"; then
+            fail "$mk" "${pkg}_LICENSE is unknown"
+          fi
+
+          if ! grep -Eq "^${pkg}_LICENSE_FILES[[:space:]]*[:?]?=[[:space:]]*[^[:space:]]" "$mk"; then
+            fail "$mk" "no ${pkg}_LICENSE_FILES, so legal-info saves no license text"
+          fi
+        done
+
+        exit "$status"
+
+    # The build's notices step fails on a font or sound in the overlay, or in
+    # its zips, that licenses/notices.ini does not attribute. That part needs
+    # no build, so run it here and find out in seconds rather than hours.
+    - name: Check the overlay's fonts and sounds are attributed
+      run: |
+        python3 licenses/notices.py --config licenses/notices.ini \
+          --stamp check --title "FunKey rootfs overlay" \
+          --overlay FunKey/board/funkey/rootfs-overlay \
+          --output "$RUNNER_TEMP/overlay-notices.txt"
+
+    # Each RetroFE theme carries a Credits.txt, both in the overlay and in
+    # funkey_files.zip, which first boot and updates unpack onto the card.
+    # The Atari Lynx boot ROM is proprietary firmware and must not ship.
+    - name: Check every theme carries its credits
+      run: |
+        python3 - <<'PY'
+        import os, sys, zipfile
+        overlay = "FunKey/board/funkey/rootfs-overlay"
+        layouts = os.path.join(overlay, "usr/games/layouts")
+        archive = os.path.join(overlay, "usr/local/share/funkey_files.zip")
+        problems = [os.path.join(layouts, d) + " has no Credits.txt"
+                    for d in sorted(os.listdir(layouts))
+                    if os.path.isdir(os.path.join(layouts, d))
+                    and not os.path.isfile(os.path.join(layouts, d, "Credits.txt"))]
+        with zipfile.ZipFile(archive) as z:
+            names = set(z.namelist())
+        prefix = "FunKey/.retrofe/layouts/"
+        themes = sorted({n[len(prefix):].split("/")[0] for n in names
+                         if n.startswith(prefix) and n.count("/") > 3})
+        problems += ["%s: %s has no Credits.txt" % (archive, t) for t in themes
+                     if prefix + t + "/Credits.txt" not in names]
+        problems += ["%s ships %s" % (archive, n) for n in sorted(names)
+                     if n.lower().endswith("/lynxboot.img")]
+        for p in problems:
+            print("::error::" + p)
+        sys.exit(1 if problems else 0)
+        PY
+
+        # TFT ships a placeholder highlight.wav, not orginaljun's clip.
+        # Do not retain an attribution for a work the theme does not contain.
+        if grep -qi orginaljun \
+          FunKey/board/funkey/rootfs-overlay/usr/games/layouts/TFT/Credits.txt; then
+          echo "::error::TFT credits a sound it does not ship"
+          exit 1
+        fi
+
+    # The README scopes LICENSE to Starling's own code, as GPL-2.0-or-later
+    # the way the Makefile header grants it, and says where the bundled
+    # components' notices ship.
+    - name: Check the README's License section
+      run: |
+        section="$(awk '/^## / { inside = ($0 == "## License") } inside' README.md)"
+        for pattern in 'GNU General Public License v2.0 or later' \
+                       'Third-Party-Notices.txt' '/usr/share/licenses/' 'share/licenses/'; do
+          grep -q -- "$pattern" <<< "$section" || {
+            echo "::error file=README.md::the License section does not mention '$pattern'"
+            exit 1
+          }
+        done

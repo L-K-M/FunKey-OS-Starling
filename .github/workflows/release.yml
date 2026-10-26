@@ -157,6 +157,12 @@ jobs:
           | \`${sdk}\` | Cross-toolchain, needed only to build software for the console. |
 
           See the [README](https://github.com/${GITHUB_REPOSITORY}#install) for how to install or update.
+
+          Starling's own code is GPL-2.0-or-later; source: https://github.com/${GITHUB_REPOSITORY}/tree/${TAG}.
+          The images and the SDK bundle third-party components under their own licenses, among them four
+          emulator cores under non-commercial terms. Their notices are in \`Third-Party-Notices.txt\`: on the
+          console in \`/usr/share/licenses/\`, in the SDK under \`share/licenses/\`. See the
+          [README](https://github.com/${GITHUB_REPOSITORY}#license).
           NOTES
 
           # Appended rather than interpolated into the heredoc: the changelog is

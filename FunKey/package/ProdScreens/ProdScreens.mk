@@ -7,8 +7,10 @@
 PRODSCREENS_VERSION = FunKey-ProdScreens-FunKey-1.1.2
 PRODSCREENS_SITE_METHOD = git
 PRODSCREENS_SITE = https://github.com/FunKey-Project/FunKey-ProdScreens.git
-PRODSCREENS_SITE_LICENSE = GPL-2.1+
-PRODSCREENS_SITE_LICENSE_FILES = COPYING
+# FunKey-Project/FunKey-ProdScreens has no license file and its sources carry
+# no license notice, so there is no license to name and no file to copy. The
+# gap is recorded in licenses/notices.ini until upstream states one.
+PRODSCREENS_LICENSE = unknown
 
 PRODSCREENS_DEPENDENCIES = sdl sdl_image sdl_ttf
 

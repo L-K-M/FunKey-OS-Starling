@@ -18,6 +18,22 @@ upstream. **The default branch is `master`, not `main`.**
   not that the screen works. Treat hardware-facing changes accordingly
   (see README "Early days" and "Recovery").
 
+## Licensing
+
+- Starling's own code is GPL-2.0-or-later (`LICENSE` and the Makefile
+  header). The README's License section scopes it and says where the
+  notices ship; the License metadata workflow checks that section.
+- `licenses/notices.py` writes `Third-Party-Notices.txt` into both
+  filesystems (from the post-build scripts) and the SDK (`make sdk`), from
+  the Buildroot legal-info the Makefile collects before each build. It fails
+  the build when a package, picoarch core or overlay font or sound has no
+  license text. Give a new package `<PKG>_LICENSE` and `<PKG>_LICENSE_FILES`,
+  a new core a `[core]` section and a new overlay asset an `[asset]` section
+  in `licenses/notices.ini`. Record an unknown license there as a gap; never
+  leave a component out. Keep build.yml's notices check passing.
+- Before adding a bundled asset (fonts, images, sounds, game data, firmware),
+  confirm its license allows redistribution in the images.
+
 <!-- shared-rules:start -->
 
 ## Working practices

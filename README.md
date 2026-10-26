@@ -362,3 +362,35 @@ from:
 Favorites itself is device-independent: it touches RetroFE, collections and
 theme artwork, none of which the console branches modify. Porting it to
 `q36_mini` or `gba_mini` would be the same operation.
+
+## License
+
+Starling's own code, including this fork's changes, is released under the
+[GNU General Public License v2.0 or later](LICENSE), as the Makefile header
+grants it: the build files, configuration, scripts and tools, and the patches
+it applies. A patch to a bundled package ships as part of that package, under
+the package's license; RetroFE, for example, is GPL-3.0.
+
+The images and the SDK bundle third-party code and assets, which keep their
+own licenses: the Linux kernel, U-Boot, BusyBox and the other packages
+Buildroot builds; musl, the GCC runtime libraries and gdbserver from the
+prebuilt FunKey-sdk-2.3.0 toolchain; the emulator cores picoarch builds; and
+fonts, theme sounds and freeware games. Four of the cores, snes9x2005,
+PicoDrive, MAME 2000 and FB Alpha 2012, are under licenses that forbid selling
+them, so an image that contains them may not be sold. The notices of all of
+these, with each component's license, license texts and source where known,
+ship in each artifact as `Third-Party-Notices.txt`:
+
+- SD card image and update file: `/usr/share/licenses/Third-Party-Notices.txt`
+  in the FunKey filesystem, and in the Recovery filesystem for its own packages
+- SDK: `share/licenses/Third-Party-Notices.txt` in the tarball
+
+The GPL covers Starling's own code only. The fonts, sounds, artwork and game
+data under `FunKey/board/funkey/rootfs-overlay` are third-party and keep their
+own terms, and `licenses/texts/` holds third-party license texts.
+[`licenses/notices.ini`](licenses/notices.ini) records the bundled components
+Buildroot's metadata does not cover, including those whose license is not
+known yet.
+
+The Atari Lynx core needs the Lynx boot ROM, which is not included: copy your
+own `lynxboot.img` to `FunKey/.picoarch/system/` on the card.
