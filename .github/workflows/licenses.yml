@@ -114,3 +114,17 @@ jobs:
             print("::error::" + p)
         sys.exit(1 if problems else 0)
         PY
+
+    # The README scopes LICENSE to Starling's own code, as GPL-2.0-or-later
+    # the way the Makefile header grants it, and says where the bundled
+    # components' notices ship.
+    - name: Check the README's License section
+      run: |
+        section="$(awk '/^## / { inside = ($0 == "## License") } inside' README.md)"
+        for pattern in 'GNU General Public License v2.0 or later' \
+                       'Third-Party-Notices.txt' '/usr/share/licenses/' 'share/licenses/'; do
+          grep -q -- "$pattern" <<< "$section" || {
+            echo "::error file=README.md::the License section does not mention '$pattern'"
+            exit 1
+          }
+        done
